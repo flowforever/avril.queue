@@ -20,9 +20,12 @@
     "async"
   ],
   "author": "trump.wang",
-  "license": "MIS",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/flowforever/avril.queue/issues"
   },
-  "homepage": "https://github.com/flowforever/avril.queue"
+  "homepage": "https://github.com/flowforever/avril.queue",
+  "devDependencies": {
+    "fs-extra": "^0.14.0"
+  }
 }
