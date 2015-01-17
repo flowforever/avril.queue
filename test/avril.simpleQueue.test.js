@@ -380,5 +380,41 @@ describe('avQ', function(){
             });
 
         })
-    })
+    });
+
+    describe('#if', function() {
+        it('should have test.txt', function(done) {
+            var q = avQ();
+            var trueFilePath = './test/data/test.txt'
+                , falseFilePath = './test/data/test.txt-false'
+                , $fileContent
+                , wontHaveValue = true
+                , shouldHaveValue = true
+                , executeElseIf = false
+                , $hasFileTrue = q.$await(fs.exists, trueFilePath)
+                , $hasFalseFile = q.$await(fs.exists, falseFilePath);
+
+            q.$if($hasFileTrue, function() {
+                    $fileContent = this.$$await(fs.readFile, trueFilePath, 'utf8');
+                })
+                .$else(function(){
+                    wontHaveValue = false;
+                });
+
+            q.$if($hasFalseFile, function(){
+                shouldHaveValue = false;
+            }).$elseIf($hasFileTrue, function() {
+                executeElseIf = true;
+            });
+
+            q.func(function() {
+                assert.equal(!!$fileContent, true);
+                assert.equal($fileContent.result().split('\n').length, 9);
+                assert.equal(wontHaveValue, true);
+                assert.equal(shouldHaveValue, true);
+                assert.equal(executeElseIf, true);
+                done();
+            });
+        })
+    });
 });

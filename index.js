@@ -280,7 +280,7 @@
                     , asyncCall = hasCtx ? argArr[1] : argArr[0]
                     , lastArg = argArr[argArr.length - 1]
                     , hasFn = isFunction(lastArg)
-                    , fn = hasFn ? lastArg : function() { return arguments; }
+                    , fn = hasFn ? lastArg : function() { return arguments[0]; }
                     , asyncArgs = argArr.splice( hasCtx? 2: 1, argArr.length - ( (hasCtx? 3 : 2) - (hasFn? 0 : 1) ))
                     , $anonymousAwait = self.$awaitData( nameId('anonymous-data-') + (fn.name||'') );
 
@@ -389,6 +389,38 @@
 
         this.$paralEach = eachCbFactory(true);
 
+        var $ifType = function(queue, $awaitData) {
+            var trueFn , falseFn ;
+            this.$true = function(fn){
+                if(trueFn){ throw new Error('$if: could not set trueFn twice') }
+                if(fn){ trueFn = fn; }
+                return this;
+            };
+            this.$false = function(fn){
+                if(falseFn){ throw new Error('$if: could not set falseFn twice') }
+                if(fn) { falseFn = fn; }
+                return this;
+            };
+            this.$else = function(fn) {
+                return this.$false(fn);
+            };
+            this.$elseIf = function($otherAwait, fn) {
+                 return self.$if($otherAwait, fn);
+            };
+            queue.func(function() {
+                var res = ($awaitData instanceof $AwaitData) ? $awaitData.result() : $awaitData;
+                if(res){
+                    trueFn && trueFn.apply(this);
+                }else{
+                    falseFn && falseFn.apply(this);
+                }
+            });
+        };
+
+        this.$if = function($awaitData, trueFn, falseFn) {
+            return new $ifType(this, $awaitData).$true(trueFn).$false(falseFn);
+        };
+
         //await result from standard callback
         var standardAwaitMethod = function(method) {
             return function(){
@@ -405,7 +437,6 @@
         this.$$paralAwait = standardAwaitMethod('paralAwait');
         this.$$each = standardAwaitMethod('each');
         this.$$paralEach = standardAwaitMethod('paralEach');
-
     }
 
     function createInstance() {
