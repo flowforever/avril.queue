@@ -14,7 +14,7 @@ for now avril.queue only support node env, I would try to make it support the br
 	2
 	3
 	*/
-###  func, \$await , \$each
+###  func, $await , $each
     
 	 
     var avQ = require('avril.queue');
@@ -43,7 +43,7 @@ for now avril.queue only support node env, I would try to make it support the br
 	    console.log( $users.realResult() );
 	});
 	
-###\$\$await &  \$\$each
+###$$await &  $$each
 
     var avQ = require('avril.queue');
     var q = avQ();
