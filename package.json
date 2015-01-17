@@ -1,6 +1,6 @@
 {
   "name": "avril.queue",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "description": "an async flow control queue module",
   "main": "index.js",
   "directories": {
@@ -14,13 +14,13 @@
     "url": "https://github.com/flowforever/avril.queue.git"
   },
   "keywords": [
+    "queue",
     "avril",
     "avQ",
-    "async",
-    "queue"
+    "async"
   ],
   "author": "trump.wang",
-  "license": "ISC",
+  "license": "MIS",
   "bugs": {
     "url": "https://github.com/flowforever/avril.queue/issues"
   },
