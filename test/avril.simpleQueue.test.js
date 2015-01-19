@@ -4,6 +4,7 @@
 var assert = require("assert");
 var avQ = require('../index');
 var fs = require('fs-extra');
+var os = require('os');
 
 describe('avQ', function(){
     var ranTime = function(){
@@ -159,7 +160,7 @@ describe('avQ', function(){
             var q = avQ();
 
             q.$await(fs, fs.readFile, './test/data/test.txt', 'utf8' , function(err, fileContent, arg){
-                q.data('ids', fileContent.split('\n'));
+                q.data('ids', fileContent.split(os.EOL));
             });
 
             q.$each({ db: 'sql' }, findById, q.$awaitData('ids'), function(err, user) {
@@ -199,7 +200,7 @@ describe('avQ', function(){
             var q = avQ();
             
             q.$paralAwait( fs.readFile, './test/data/test.txt', 'utf8', function(err, fileContent){
-                q.data('ids', fileContent.split('\n'));
+                q.data('ids', fileContent.split(os.EOL));
             });
 
             q.$paralEach({ db: 'mongodb' }, findById, q.$awaitData('ids'), function(err, user, arg) {
@@ -225,7 +226,7 @@ describe('avQ', function(){
                 assert.equal('mongodb', q.data().users[0].db);
             });
 
-            var $userIds = q.$await( fs.readFile, './test/data/test.txt', 'utf8', function(err, fileContent){ return fileContent.split('\n') });
+            var $userIds = q.$await( fs.readFile, './test/data/test.txt', 'utf8', function(err, fileContent){ return fileContent.split(os.EOL) });
 
             var $userList = q.$each(findById, $userIds, function(err, user){ return user; });
 
@@ -329,7 +330,7 @@ describe('avQ', function(){
             var $fileContent = q.$$await( fs.readFile, './test/data/test.txt', 'utf8');
 
             var $userIds = $fileContent.conver(function($org){
-                return $org.result().split('\n');
+                return $org.result().split(os.EOL);
             });
 
             var $userJsonList = $userIds.conver(function($org){
@@ -409,7 +410,7 @@ describe('avQ', function(){
 
             q.func(function() {
                 assert.equal(!!$fileContent, true);
-                assert.equal($fileContent.result().split('\n').length, 9);
+                assert.equal($fileContent.result().split(os.EOL).length, 9);
                 assert.equal(wontHaveValue, true);
                 assert.equal(shouldHaveValue, true);
                 assert.equal(executeElseIf, true);
