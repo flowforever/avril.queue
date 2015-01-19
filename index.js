@@ -369,7 +369,7 @@
 
                 this.func(function(next) {
                     if( needResolve(eachArgs, this) ){
-                        eachArgs.func(function(){
+                        eachArgs.queue.func(function(){
                             next();
                         });
                     }else{

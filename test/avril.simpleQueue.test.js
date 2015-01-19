@@ -326,7 +326,11 @@ describe('avQ', function(){
         it('user number should be 9', function(done){
             var q = avQ();
 
-            var $fileContent = q.$$await( fs.readFile, './test/data/test.txt', 'utf8');
+            var q2 = avQ();
+
+            var q3 = avQ();
+
+            var $fileContent = q2.$$await( fs.readFile, './test/data/test.txt', 'utf8');
 
             var $userIds = $fileContent.conver(function($org){
                 return $org.result().split(os.EOL);
@@ -338,11 +342,11 @@ describe('avQ', function(){
                 });
             });
 
-            var $jsonFiles = q.$$paralEach(fs.readJson, $userJsonList);
+            var $jsonFiles = avQ().$$paralEach(fs.readJson, $userJsonList);
 
             var $userList = q.$$each(findById, $userIds);
 
-            var $userListOfParal = q.$$paralEach(findById, $userIds);
+            var $userListOfParal = q3.$$paralEach(findById, $userIds);
 
             var $userIdsFromUserList = $userList.conver(function($org){
                 return $org.result().map(function($u){
