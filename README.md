@@ -113,7 +113,7 @@ var filePath = 'the/path/of/file.txt';
 var $fileExisted = q.$await(fs.exists, filePath);
 var $fileContent;
 q.$if($fileExited, function(){
-	$fileContent = q.$$await(fs.readFile, filePath);
+	$fileContent = this.$$await(fs.readFile, filePath);
 })
 q.func(function(){
 	if($fileContent){
@@ -124,9 +124,9 @@ q.func(function(){
 var otherPath = 'the/path/of/otherFile.txt';
 
 q.$if($fileContent, function(){
-	$fileContent = q.$$await(fs.readFile, filePath);
+	$fileContent = this.$$await(fs.readFile, filePath);
 }).$elseIf(q.$await(fs.exits, otherPath), function() {
-	$fileContent = q.$$await(fs.readFile, otherPath);
+	$fileContent = this.$$await(fs.readFile, otherPath);
 });
 
 q.func(function(){
