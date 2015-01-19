@@ -210,7 +210,6 @@ describe('avQ', function(){
                 user.friends = [];
 
                 this.$paralEach(findById, [ 11,12,13,14], function(err, friend) {
-                    //console.log('user:',user.id,friend.id);
                     user.friends.push(friend);
                     friend.names = [];
                     this.$paralEach(findById, [31,32,33], function(e, name){
@@ -418,4 +417,37 @@ describe('avQ', function(){
             });
         })
     });
+
+    describe('#resolve', function(){
+        var filePath = './test/data/json/1.json';
+        var $file1 = avQ().$$paralAwait(fs.readFile, filePath, 'utf8');
+        var $file2 = avQ().$$await(fs.readFile, filePath, 'utf8');
+        var $file3 = avQ().$$await(fs.readFile, filePath, 'utf8');
+
+
+        var $file5 = avQ().$$await(fs.readFile, filePath, 'utf8');
+        var $file6 = avQ().$$paralAwait(fs.readFile, filePath, 'utf8');
+        var $file7 = avQ().$$await(fs.readFile, filePath, 'utf8');
+
+        it('should have content after resolved', function(done){
+            var q = avQ();
+            q.resolve($file1,$file2, $file3, function(){
+                assert.equal(!!$file1.result(), true);
+                assert.equal($file1.result(), $file2.result());
+                assert.equal($file2.result(), $file3.result());
+                done();
+            });
+        });
+
+        it('should have content after paral resolved', function(done){
+            var q = avQ();
+            q.paralResolve($file5,$file6, $file7).next(function(){
+                assert.equal(!!$file5.result(), true);
+                assert.equal($file6.result(), $file5.result());
+                assert.equal($file5.result(), $file7.result());
+                done();
+            });
+        });
+    });
+
 });

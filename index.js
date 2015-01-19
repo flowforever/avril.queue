@@ -12,8 +12,9 @@
         , isArray= function (obj) {
             return obj instanceof Array;
         }
+        , _counter = 0
         , nameId = function(name){
-            return [name ,  guid()].join('-');
+            return [name ,  guid(), ++_counter].join('-');
         }
         , simpleCounter = function(total,callback){
             if(!(this instanceof  simpleCounter)){
@@ -30,6 +31,12 @@
                 }
                 _count++;
             };
+        }
+        , isAwaitData = function ( $awaitData ) {
+            return $awaitData instanceof  $AwaitData;
+        }
+        , getRootId = function(queue){
+            return queue._pids[0] || queue.id;
         };
 
     function $AwaitData(queue, key) {
@@ -100,6 +107,11 @@
             }
             , _currentTask
             , _stop = false
+            , needResolve = function($awaitData, currentQueue) {
+                return isAwaitData($awaitData)
+                    && !$awaitData.isDone
+                    && getRootId($awaitData.queue) != getRootId(currentQueue || self);
+            }
             ;
 
         var getLastParalWrapper = function(){
@@ -118,6 +130,8 @@
                     task.status = 'doing';
                     var subQueue = new Queue();
                     subQueue.parent = self;
+                    subQueue._pids = self._pids.length? self._pids.join(',').split(',') : [];
+                    subQueue._pids.push(self.id);
 					subQueue._pid = self.id;
                     var _next = function() {
                         if(task.status === 'done'){
@@ -158,11 +172,13 @@
 
         this.name = name;
 
+        this._pids = [];
+
         this.getCurrentTask = function() {
             return _currentTask;
-        }
+        };
 
-        this.func = function(fn) {
+        this.func = this.next = function(fn) {
             var paralWraper = getLastParalWrapper();
             if(paralWraper){
                 paralWraper.exec();
@@ -274,7 +290,8 @@
 
         var cbFactory = function(isParal){
             return function ( /* asyncCall ,args..., fn */ ) {
-                var argArr = getArgArray(arguments)
+                var self = this
+                    , argArr = getArgArray(arguments)
                     , hasCtx = argArr.length >= 3 && isFunction(argArr[1])
                     , ctx = hasCtx && argArr[0]
                     , asyncCall = hasCtx ? argArr[1] : argArr[0]
@@ -286,6 +303,16 @@
 
                 (isParal? this.paralFunc: this.func)(function(next) {
                     var subQueue = this;
+
+                    asyncArgs.forEach(function(arg){
+                        if( needResolve(arg, subQueue) ){
+                            subQueue.func(function(next){
+                                arg.queue.func(function(){
+                                    next();
+                                });
+                            });
+                        }
+                    });
 
                     asyncArgs.push(function(){
 
@@ -339,6 +366,16 @@
                     eachArgs = arguments[2];
                     fn = arguments[3];
                 }
+
+                this.func(function(next) {
+                    if( needResolve(eachArgs, this) ){
+                        eachArgs.func(function(){
+                            next();
+                        });
+                    }else{
+                        next();
+                    }
+                });
 				
 				this.func(function(next) {
 					
@@ -437,6 +474,36 @@
         this.$$paralAwait = standardAwaitMethod('paralAwait');
         this.$$each = standardAwaitMethod('each');
         this.$$paralEach = standardAwaitMethod('paralEach');
+
+        var resolveFactory = function(isParal) {
+            return function () {
+                var args = getArgArray(arguments);
+                var lastFn = args[args.length - 1];
+                if(isFunction(lastFn)){
+                    args.pop();
+                }
+                args.forEach(function(arg) {
+                    if(needResolve(arg, self)){
+                        self[isParal? 'paralFunc' : 'func'](function(next){
+                            arg.queue.func(function(){
+                                next();
+                            }).onError(function(error){
+                                self.error(error);
+                            })
+                        });
+                    }
+                });
+                if(isFunction(lastFn)){
+                    self.func(function(){
+                        lastFn.apply(self, args);
+                    });
+                }
+                return self;
+            }
+        };
+        this.resolve = resolveFactory();
+        this.paralResolve = resolveFactory(true);
+
     }
 
     function createInstance() {
