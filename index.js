@@ -427,7 +427,11 @@
         this.$paralEach = eachCbFactory(true);
 
         var $ifType = function(queue, $awaitData) {
-            var trueFn , falseFn ;
+            var trueFn , falseFn , $preAwaitData = [];
+            this._setPreAwaitData = function($awaitData){
+                $preAwaitData.push($awaitData);
+                return this;
+            };
             this.$true = function(fn){
                 if(trueFn){ throw new Error('$if: could not set trueFn twice') }
                 if(fn){ trueFn = fn; }
@@ -442,9 +446,17 @@
                 return this.$false(fn);
             };
             this.$elseIf = function($otherAwait, fn) {
-                 return self.$if($otherAwait, fn);
+                 return self.$if($otherAwait, fn)._setPreAwaitData($awaitData);
             };
             queue.func(function() {
+                var preIsFalse = $preAwaitData.filter(function($data){
+                    return ($data instanceof $AwaitData) ? $data.result() : $data;
+                }).length == 0;
+
+                if(!preIsFalse){
+                    return true;
+                }
+
                 var res = ($awaitData instanceof $AwaitData) ? $awaitData.result() : $awaitData;
                 if(res){
                     trueFn && trueFn.apply(this);
