@@ -78,7 +78,8 @@
             return getRealResult(this);
         };
 
-        this.conver = function(valueConverFunc) {
+        //alias
+        this.conver = this.convert = this.cast = function(valueConverFunc) {
             var key = nameId('anonymous-data-');
             var $anonymousData = new $AwaitData(this.queue, key);
             valueConverFunc = valueConverFunc || function($org){ return $org.result(); }
