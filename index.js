@@ -98,8 +98,10 @@
 
     }
 
-    function Queue(name) {
+    function Queue(options) {
         var self = this
+            , name = typeof options === 'object'? options.name : options
+            , options = typeof options !== 'object'? {} : options
             , queue = []
             , parallers = []
             , data = {}
@@ -120,6 +122,7 @@
         };
         var breakParal = function(){
             parallers.push(null);
+            parallers = [];
         };
         var pickNext = function(){
             var task = queue[0];
@@ -171,7 +174,7 @@
 
         this.id = nameId('q');
 
-        this.name = name;
+        this.name = name || this.id;
 
         this._pids = [];
 
@@ -184,13 +187,15 @@
             if(paralWraper){
                 paralWraper.exec();
             }
-            if(arguments.length == 1){
+            if(arguments.length == 1 && isFunction(fn)){
                 queue.push({ fn: wrapFn(fn) } );
-                pickNext();
+            } else if(arguments.length == 1 && isArray(fn)){
+                queue.push({ fn: fn, paralId: nameId('paral') });
             } else if( arguments.length > 1){
                 // param calls
                 queue.push({ fn: arguments, paralId: nameId('paral') })
             }
+            pickNext();
             return this;
         };
 
@@ -251,7 +256,7 @@
                     , fnArr:[]
                     , exec: function() {
                         breakParal();
-                        self.func.apply(self, this.fnArr);
+                        self.func(this.fnArr);
                         return self;
                     }
                     , func: function(){
