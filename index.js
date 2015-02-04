@@ -288,7 +288,7 @@
             return this;
         };
 
-        var cbFactory = function(isParal){
+        var cbFactory = function(isParal, hasReturn){
             return function ( /* asyncCall ,args..., fn */ ) {
                 var self = this
                     , argArr = getArgArray(arguments)
@@ -299,7 +299,7 @@
                     , hasFn = isFunction(lastArg)
                     , fn = hasFn ? lastArg : function() { return arguments[0]; }
                     , asyncArgs = argArr.splice( hasCtx? 2: 1, argArr.length - ( (hasCtx? 3 : 2) - (hasFn? 0 : 1) ))
-                    , $anonymousAwait = self.$awaitData( nameId('anonymous-data-') + (fn.name||'') );
+                    , $anonymousAwait = hasReturn ? self.$awaitData( nameId('anonymous-data-') + (fn.name||'') ) : null;
 
                 (isParal? this.paralFunc: this.func)(function(next) {
                     var subQueue = this;
@@ -333,7 +333,7 @@
 
                         var result = fn.apply(subQueue, asyncResArgs);
 
-                        $anonymousAwait.result( result === undefined ? arguments : result );
+                        hasReturn && $anonymousAwait.result( result === undefined ? arguments : result );
 
                         !asyncHasCallback && next();
 
@@ -347,7 +347,7 @@
             };
         };
 
-        var eachCbFactory = function(isParal){
+        var eachCbFactory = function(isParal, hasReturn){
             return function(asyncCall , eachArgs, fn) {
                 var ctx
                     , standardiseArg = function(arg){
@@ -359,7 +359,7 @@
                         }
                         return [arg];
                     }
-                    , $waitList = self.$awaitData( nameId('anonymous-data')  );
+                    , $waitList = hasReturn ? self.$awaitData( nameId('anonymous-data')  ) : null;
                 if(arguments.length == 4){
                     ctx = arguments[0];
                     asyncCall = arguments[1];
@@ -390,16 +390,16 @@
 						asyncArgs.splice(0, 0, asyncCall);
 						ctx && asyncArgs.splice(0, 0, ctx);
 						asyncArgs.push(fn);
-						return subQueue[isParal? '$paralAwait' : '$await'].apply(subQueue, asyncArgs);
+						return subQueue[ (hasReturn ? '$' : '') + (isParal? 'paralAwait' : 'await')].apply(subQueue, asyncArgs);
 					});
 
-                    $waitList.result($list||[]);
+                    hasReturn && $waitList.result($list||[]);
 
                     isArray(eachArgs) && eachArgs.length && subQueue.func(function(){ next() });
 
 				});
 
-                return $waitList;
+                return hasReturn? $waitList : null;
             };
         };
 
@@ -418,13 +418,21 @@
 			return  awaitData[key];
         };
 
-        this.$await = cbFactory();
+        this.await = cbFactory(false, false);
 
-        this.$paralAwait = cbFactory(true);
+        this.$await = cbFactory(false, true);
 
-        this.$each = eachCbFactory();
+        this.paralAwait = cbFactory(true, false);
 
-        this.$paralEach = eachCbFactory(true);
+        this.$paralAwait = cbFactory(true, true);
+
+        this.each = eachCbFactory(false, false);
+
+        this.$each = eachCbFactory(false, true);
+
+        this.paralEach = eachCbFactory(true, false);
+
+        this.$paralEach = eachCbFactory(true, true);
 
         var $ifType = function(queue, $awaitData) {
             var trueFn , falseFn , $preAwaitData = [];
