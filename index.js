@@ -451,6 +451,7 @@
                 var args = arguments;
                 for(var i=0; i < arguments.length; i++) {
                     needToGoFurther && (function(data, index){
+                        var isLast = index == (args.length - 1);
                         if(isAwaitData(data)){
                             q.func(function(next){
                                 if(!needToGoFurther){
@@ -458,11 +459,13 @@
                                 }
                                 data.onReady(function(res){
                                     next();
-                                    setValue(res, index == (args.length - 1));
+                                    setValue(res, isLast);
                                 });
                             });
                         } else {
-                            setValue(data);
+                            q.func(function(){
+                                setValue(data, isLast);
+                            });
                         }
                     })(arguments[i], i);
                 }
@@ -473,6 +476,7 @@
                 }
 
                 function setValue(data, isLast){
+
                     if(isOrMethod){
                         if(data) {
                             result = data;
@@ -493,6 +497,7 @@
                         needToGoFurther = false;
                         appendNext();
                     }
+                    
                 }
                 function appendNext(){
                     q.insertFunc(function(){
@@ -624,38 +629,3 @@
     module.exports =  createInstance;
 
 })(module);
-
-(function(){
-    var fs = require('fs-extra')
-        , path = require('path');
-    var q = module.exports()
-        , filePath1 = './test/data/json/1.json'
-        , filePath2 = './test/data/json/2.json'
-        , filePath3 = './test/data/json/3.json'
-        , trueValue
-        , falseValue;
-
-        q.$if( q.$or( q.$await(fs.exists, filePath1) ) , function(){
-            trueValue = true;
-        }).$else(function(){
-            trueValue = false;
-        });
-
-        var $andRes = q.$and( q.$await(fs.exists, filePath2 ) );
-
-        q.func(function(){
-            console.log('$andRes',$andRes.result())
-        });
-
-        q.$if($andRes , function(){
-            falseValue = true;
-        }).$else(function(){
-            falseValue = false;
-        });
-
-        q.func(function(){
-
-            done();
-        })
-
-})();

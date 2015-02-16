@@ -458,18 +458,30 @@ describe('avQ', function(){
         var q = avQ()
             , filePath1 = './test/data/json/1.json'
             , filePath2 = './test/data/json/2.json'
-            , filePath3 = './test/data/json/3.json'
+            , filePath5 = './test/data/json/5.json'
             , trueValue
             , falseValue;
 
         it('should be true', function(done) {
-            q.$if( q.$or( q.$await(fs.exists, filePath1) ) , function(){
+            var $orRes = q.$or(
+                false,
+                q.$await(fs.exists, filePath1) ,
+                q.$await(fs.exists, filePath5) ,
+                false
+            );
+
+            q.$if(  $orRes, function(){
                 trueValue = true;
             }).$else(function(){
                 trueValue = false;
             });
 
-            var $andRes = q.$and( q.$await(fs.exists, filePath2 ) );
+            var $andRes = q.$and(
+                true,
+                q.$await(fs.exists, filePath2 ),
+                q.$await(fs.exists, filePath5 ),
+                true
+            );
 
             q.func(function(){
                 console.log('$andRes',$andRes.result())
@@ -482,8 +494,8 @@ describe('avQ', function(){
             });
 
             q.func(function(){
-                assert.equal(trueValue === true, true);
-                assert.equal(falseValue !== false, false);
+                assert.equal(trueValue, true);
+                assert.equal(falseValue, false);
                 done();
             })
         })
