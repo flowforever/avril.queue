@@ -69,8 +69,8 @@
         this.result = function(value) {
             if(arguments.length == 1){
                 this.queue.data(this.key, value);
+                this.isDone = true;
             }
-            this.isDone = true;
             return this.queue.data(this.key);
         };
 
@@ -94,6 +94,17 @@
             }
 
             return $anonymousData;
+        }
+
+        this.onReady = function (cb) {
+            var self = this;
+            if(this.isDone) { 
+                cb( this.result() ) 
+            } else {
+                this.queue.func(function() {
+                    cb( self.result() );
+                });
+            }
         }
 
     }
@@ -138,7 +149,7 @@
                     subQueue._pids.push(self.id);
 					subQueue._pid = self.id;
                     var _next = function() {
-                        if(task.status === 'done'){
+                        if(task.status === 'done' || task.stop){
                             return false;
                         }
                         task.status = 'done';
@@ -154,7 +165,7 @@
                     }else{
                         var counter = simpleCounter(fn.length, _next);
                         for(var i=0; i< fn.length;i++){
-                            wrapFn(fn[i]).call(subQueue,function(){ !_stop && counter.count() }, task );
+                            wrapFn(fn[i]).call(subQueue,function(){ !_stop && !task.stop && counter.count() }, task );
                         }
                     }
                 }
@@ -183,6 +194,7 @@
         };
 
         this.func = this.next = function(fn) {
+            _stop = false;
             var paralWraper = getLastParalWrapper();
             if(paralWraper){
                 paralWraper.exec();
@@ -201,6 +213,9 @@
 
         this.stop = function() {
             _stop = true;
+            queue.forEach(function(task){
+               task.stop = true;
+            });
             //clear current queue
             queue.splice(0);
         };
@@ -234,6 +249,9 @@
             }
             var currentIndex = 0;
             for(; currentIndex < queue.length && queue[currentIndex].id != currentTask.id; currentIndex++);
+            if(!queue[currentIndex]) {
+                return this.func(func);
+            }
             queue[currentIndex].insertCounter = queue[currentIndex].insertCounter || 0;
             queue[currentIndex].insertCounter++;
             queue.splice(currentIndex + queue[currentIndex].insertCounter,0,{ fn: wrapFn(func) });
@@ -423,6 +441,74 @@
             }
 			return  awaitData[key];
         };
+
+        var booleanFactory = function(isOrMethod) {
+            return function(){
+                var q = new Queue();
+                var $result = q.$awaitData('boolean-result');
+                var result;
+                var needToGoFurther = true;
+                var args = arguments;
+                for(var i=0; i < arguments.length; i++) {
+                    needToGoFurther && (function(data, index){
+                        var isLast = index == (args.length - 1);
+                        if(isAwaitData(data)){
+                            q.func(function(next){
+                                if(!needToGoFurther){
+                                    return next();
+                                }
+                                data.onReady(function(res){
+                                    next();
+                                    setValue(res, isLast);
+                                });
+                            });
+                        } else {
+                            q.func(function(){
+                                setValue(data, isLast);
+                            });
+                        }
+                    })(arguments[i], i);
+                }
+                if(q.length() == 0) {
+                    if(needToGoFurther){
+                        appendNext();
+                    }
+                }
+
+                function setValue(data, isLast){
+
+                    if(isOrMethod){
+                        if(data) {
+                            result = data;
+                            needToGoFurther = false;
+                            appendNext();
+                        }
+                    } else {
+                        if(!data) {
+                            result = false;
+                            needToGoFurther = false;
+                            appendNext();
+                        } else {
+                            result = data;
+                        }
+                    }
+
+                    if(needToGoFurther && isLast){
+                        needToGoFurther = false;
+                        appendNext();
+                    }
+                    
+                }
+                function appendNext(){
+                    q.insertFunc(function(){
+                        $result.result(result);
+                    })
+                }
+                return $result;
+            }
+        };
+        this.$or = booleanFactory(true);
+        this.$and = booleanFactory(false);
 
         this.await = cbFactory(false, false);
 
