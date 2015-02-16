@@ -454,4 +454,39 @@ describe('avQ', function(){
         });
     });
 
+    describe('#or', function(){
+        var q = avQ()
+            , filePath1 = './test/data/json/1.json'
+            , filePath2 = './test/data/json/2.json'
+            , filePath3 = './test/data/json/3.json'
+            , trueValue
+            , falseValue;
+
+        it('should be true', function(done) {
+            q.$if( q.$or( q.$await(fs.exists, filePath1) ) , function(){
+                trueValue = true;
+            }).$else(function(){
+                trueValue = false;
+            });
+
+            var $andRes = q.$and( q.$await(fs.exists, filePath2 ) );
+
+            q.func(function(){
+                console.log('$andRes',$andRes.result())
+            });
+
+            q.$if($andRes , function(){
+                falseValue = true;
+            }).$else(function(){
+                falseValue = false;
+            });
+
+            q.func(function(){
+                assert.equal(trueValue === true, true);
+                assert.equal(falseValue !== false, false);
+                done();
+            })
+        })
+    });
+
 });
