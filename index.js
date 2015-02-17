@@ -110,9 +110,10 @@
     }
 
     function Queue(options) {
+        options = typeof options !== 'object'? {} : options;
+
         var self = this
             , name = typeof options === 'object'? options.name : options
-            , options = typeof options !== 'object'? {} : options
             , queue = []
             , parallers = []
             , data = {}
