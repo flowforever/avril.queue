@@ -1,7 +1,7 @@
 /**
  * Created by trump on 14-11-22.
  */
-(function(module) {
+(function() {
 
     var guid = function(){
             return Date.now() + '_' + parseInt( 10000 * Math.random() )
@@ -110,6 +110,10 @@
     }
 
     function Queue(options) {
+        if(!(this instanceof  Queue)){
+            return new Queue(options);
+        }
+
         options = typeof options !== 'object'? {} : options;
 
         var self = this
@@ -619,14 +623,20 @@
 
     }
 
-    function createInstance() {
-        return new Queue();
-    };
+    Queue.$AwaitData = $AwaitData;
 
-    createInstance.$AwaitData = $AwaitData;
+    Queue.simpleCounter = simpleCounter;
 
-    createInstance.simpleCounter = simpleCounter;
 
-    module.exports =  createInstance;
-
-})(module);
+    // add browser support
+    var globalScope = (typeof global !== 'undefined' && (typeof window === 'undefined' || window === global.window)) ? global : this;
+    if((typeof module !== 'undefined' && module && module.exports)){
+        module.exports =  Queue;
+    } else if(typeof define === 'function' && define.amd){
+        define(function(){
+            return Queue;
+        })
+    } else {
+        globalScope.avQ = Queue;
+    }
+}).call(this);
