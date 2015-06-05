@@ -58,11 +58,11 @@
         this.isDone = false;
 
         this.error = function(err){
-            this.queue.error(err);
             if(arguments.length == 1){
+                this.queue.error(err);
                 error = err;
             }else{
-                return error;
+                return error || this.queue.error();
             }
         };
 
