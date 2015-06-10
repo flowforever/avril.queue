@@ -565,15 +565,10 @@
                 var res = ($awaitData instanceof $AwaitData) ? $awaitData.result() : $awaitData;
                 if (res) {
                     trueFn && trueFn.call(this, next);
-                    trueFn && (trueFn.length == 0 && next());
-
+                    (trueFn && trueFn.length == 0 || !trueFn) && next();
                 } else {
                     falseFn && falseFn.call(this, next);
-                    falseFn && (falseFn.length == 0 && next());
-                }
-
-                if (!trueFn && !falseFn) {
-                    next();
+                    (falseFn && falseFn.length == 0 || !falseFn) && next();
                 }
             });
         };
