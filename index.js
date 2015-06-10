@@ -553,7 +553,7 @@
             this.$elseIf = function($otherAwait, fn) {
                  return self.$if($otherAwait, fn)._setPreAwaitData($awaitData);
             };
-            queue.func(function() {
+            queue.func(function(next) {
                 var preIsFalse = $preAwaitData.filter(function($data){
                     return ($data instanceof $AwaitData) ? $data.result() : $data;
                 }).length == 0;
@@ -563,10 +563,17 @@
                 }
 
                 var res = ($awaitData instanceof $AwaitData) ? $awaitData.result() : $awaitData;
-                if(res){
-                    trueFn && trueFn.apply(this);
-                }else{
-                    falseFn && falseFn.apply(this);
+                if (res) {
+                    trueFn && trueFn.call(this, next);
+                    trueFn && (trueFn.length == 0 && next());
+
+                } else {
+                    falseFn && falseFn.call(this, next);
+                    falseFn && (falseFn.length == 0 && next());
+                }
+
+                if (!trueFn && !falseFn) {
+                    next();
                 }
             });
         };
