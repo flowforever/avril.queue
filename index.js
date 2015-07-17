@@ -158,12 +158,7 @@
                     subQueue._pids = self._pids.length ? self._pids.join(',').split(',') : [];
                     subQueue._pids.push(self.id);
                     subQueue._pid = self.id;
-                    var _next = function (err) {
-                        if (err) {
-                            this.error(err);
-                            return queue.stop();
-                        }
-
+                    var _next = function () {
                         if (task.status === 'done' || task.stop) {
                             return false;
                         }
@@ -242,6 +237,7 @@
                 return this._error;
             }
             if (err) {
+                this.stop();
                 this._error = err;
                 this.onError();
             }
@@ -662,17 +658,27 @@
             for (var fn in clone) {
                 if (typeof clone[fn] === 'function') {
                     (function (fn) {
-                        clone[fn] = clone[fn].bind(obj);
+                        var func =  obj[fn].bind(obj);
+
+                        clone[fn] = function() {
+                            var args = toArray(arguments);
+
+                            self.func(function(next) {
+                                args.push(next);
+                                func.apply(obj, args);
+                            })
+                        };
+
                         clone['$' + fn] = function () {
                             //fs.readFile(filePath, 'utf8', next)
                             var args = toArray(arguments);
-                            args.splice(0, 0, clone[fn]);
+                            args.splice(0, 0, func);
                             self.$await.apply(self, args);
                         }.bind(self);
 
                         clone['$$' + fn] = function () {
                             var args = toArray(arguments);
-                            args.splice(0, 0, clone[fn]);
+                            args.splice(0, 0, func);
                             self.$$await.apply(self, args);
                         }.bind(self);
                     })
