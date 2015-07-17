@@ -86,8 +86,8 @@
             var key = nameId('anonymous-data-');
             var $anonymousData = new $AwaitData(this.queue, key);
             valueConverFunc = valueConverFunc || function ($org) {
-                    return $org.result();
-                }
+                return $org.result();
+            }
             var counter = 0;
             var orgResultMethod = $anonymousData.result;
 
@@ -158,7 +158,12 @@
                     subQueue._pids = self._pids.length ? self._pids.join(',').split(',') : [];
                     subQueue._pids.push(self.id);
                     subQueue._pid = self.id;
-                    var _next = function () {
+                    var _next = function (err) {
+                        if (err) {
+                            this.error(err);
+                            return queue.stop();
+                        }
+
                         if (task.status === 'done' || task.stop) {
                             return false;
                         }
@@ -247,10 +252,13 @@
         };
 
         this.onError = function (handler) {
+            var self = this;
             if (arguments.length == 1) {
                 _onError = handler;
             } else {
-                _onError.call(this);
+                setTimeout(function () {
+                    _onError.call(self, self.error());
+                }, 1);
             }
         };
 
@@ -517,7 +525,7 @@
                         needToGoFurther = false;
                         appendNext();
                     }
-                    
+
                 }
 
                 function appendNext() {
@@ -648,7 +656,6 @@
         this.resolve = resolveFactory();
         this.paralResolve = resolveFactory(true);
 
-
         this.wrap = function (obj) {
             var self = this;
             var clone = Object.create(obj);
@@ -679,7 +686,6 @@
     Queue.$AwaitData = $AwaitData;
 
     Queue.simpleCounter = simpleCounter;
-
 
 // add browser support
     var globalScope = (typeof global !== 'undefined' && (typeof window === 'undefined' || window === global.window)) ? global : this;
