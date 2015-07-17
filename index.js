@@ -39,7 +39,7 @@
             return queue._pids[0] || queue.id;
         }
         , toArray = function (arg) {
-            Array.prototype.slice.call(arg)
+            return Array.prototype.slice.call(arg)
         };
 
     function $AwaitData(queue, key) {
@@ -243,18 +243,19 @@
             }
         };
 
-        var _onError = function () {
-            this.parent && this.parent.error(this._error);
-        };
+        var _onError;
 
         this.onError = function (handler) {
-            var self = this;
             if (arguments.length == 1) {
                 _onError = handler;
             } else {
-                setTimeout(function () {
-                    _onError.call(self, self.error());
-                }, 1);
+                if (_onError) {
+                    setTimeout(function () {
+                        _onError.call(self, self.error());
+                    }, 1);
+                } else {
+                    self.parent && self.parent.error(self.error());
+                }
             }
         };
 
@@ -611,7 +612,7 @@
             return function () {
                 var args = getArgArray(arguments);
                 args.push(function (err, res) {
-                    this.error(err);
+                    if (err) return this.error(err);
                     return res;
                 });
                 return self['$' + method].apply(this, args);
@@ -653,36 +654,35 @@
         this.paralResolve = resolveFactory(true);
 
         this.wrap = function (obj) {
-            var self = this;
-            var clone = Object.create(obj);
-            for (var fn in clone) {
-                if (typeof clone[fn] === 'function') {
+            var clone = {};
+            for (var fn in obj) {
+                if (typeof obj[fn] === 'function') {
                     (function (fn) {
-                        var func =  obj[fn].bind(obj);
+                        var func = obj[fn].bind(obj);
 
-                        clone[fn] = function() {
+                        clone[fn] = function () {
                             var args = toArray(arguments);
 
-                            self.func(function(next) {
+                            self.func(function (next) {
                                 args.push(next);
-                                func.apply(obj, args);
+                                return func.apply(null, args);
                             })
                         };
 
                         clone['$' + fn] = function () {
-                            //fs.readFile(filePath, 'utf8', next)
                             var args = toArray(arguments);
                             args.splice(0, 0, func);
-                            self.$await.apply(self, args);
+                            return self.$await.apply(self, args);
+
                         }.bind(self);
 
                         clone['$$' + fn] = function () {
                             var args = toArray(arguments);
                             args.splice(0, 0, func);
-                            self.$$await.apply(self, args);
+                            return self.$$await.apply(self, args);
                         }.bind(self);
-                    })
-                    (fn);
+
+                    })(fn);
                 }
             }
             return clone;
