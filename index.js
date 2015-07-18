@@ -370,19 +370,11 @@
                             return arg;
                         });
 
-                        var asyncHasCallback = (asyncResArgs.length + 1) < fn.length;
-
-                        asyncResArgs.push(asyncArgs);
-
-                        if (asyncHasCallback) {
-                            asyncResArgs.push(next);
-                        }
-
                         var result = fn.apply(subQueue, asyncResArgs);
 
                         hasReturn && $anonymousAwait.result(result === undefined ? arguments : result);
 
-                        !asyncHasCallback && next();
+                        next();
 
                     });
 
