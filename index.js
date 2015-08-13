@@ -691,6 +691,7 @@
         }
         var res = {};
         for (var k in obj) {
+            res[k] = obj[k];
             if (obj.hasOwnProperty(k)) {
                 if (typeof obj[k] === 'function') {
                     res[k] = obj[k].bind(obj);
