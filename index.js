@@ -86,8 +86,8 @@
             var key = nameId('anonymous-data-');
             var $anonymousData = new $AwaitData(this.queue, key);
             valueConverFunc = valueConverFunc || function ($org) {
-                return $org.result();
-            }
+                    return $org.result();
+                }
             var counter = 0;
             var orgResultMethod = $anonymousData.result;
 
@@ -684,6 +684,21 @@
     Queue.$AwaitData = $AwaitData;
 
     Queue.simpleCounter = simpleCounter;
+
+    Queue.safe = function (obj) {
+        if (!obj || typeof  obj !== 'object' || obj instanceof Array) {
+            return obj;
+        }
+        var res = {};
+        for (var k in obj) {
+            if (obj.hasOwnProperty(k)) {
+                if (typeof obj[k] === 'function') {
+                    res[k] = obj[k].bind(obj);
+                }
+            }
+        }
+        return res;
+    };
 
 // add browser support
     var globalScope = (typeof global !== 'undefined' && (typeof window === 'undefined' || window === global.window)) ? global : this;
