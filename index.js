@@ -175,6 +175,8 @@
                             pickNext();
                         }
                     };
+                    _next.isNextFunc = true;
+
                     if (!task.paralId) {
                         !_stop && fn.call(subQueue, _next, task);
                     } else {
@@ -236,7 +238,11 @@
             return this.func(function (next) {
                 fn(function (error) {
                     if (error) {
-                        return self.error(error)
+                        if (error.isNextFunc) {
+                            error();
+                        } else {
+                            return self.error(error)
+                        }
                     }
                     next();
                 });
@@ -325,7 +331,7 @@
             return parallerWrapper.paralFunc(fn);
         };
 
-        this.$$paralFunc = function(fn) {
+        this.$$paralFunc = function (fn) {
             if (fn.length != 1) {
                 return this.paralFunc(fn)
             }
