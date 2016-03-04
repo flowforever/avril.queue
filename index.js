@@ -223,6 +223,17 @@
             return this;
         };
 
+        this.$$func = function(fn) {
+            if(fn.length != 1){ return this.func(fn) }
+
+            return this.func(function(next) {
+                fn(function(error) {
+                    if(error) {return self.error(error)}
+                    next();
+                });
+            });
+        };
+
         this.stop = function () {
             _stop = true;
             queue.forEach(function (task) {
