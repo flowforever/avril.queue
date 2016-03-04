@@ -116,6 +116,11 @@
 
     function Queue(options) {
         if (!(this instanceof  Queue)) {
+            var enabledTryCatch = false;
+            if (options === true) {
+                options = {enabledTryCatch: enabledTryCatch};
+            }
+
             return new Queue(options);
         }
 
@@ -223,12 +228,16 @@
             return this;
         };
 
-        this.$$func = function(fn) {
-            if(fn.length != 1){ return this.func(fn) }
+        this.$$func = function (fn) {
+            if (fn.length != 1) {
+                return this.func(fn)
+            }
 
-            return this.func(function(next) {
-                fn(function(error) {
-                    if(error) {return self.error(error)}
+            return this.func(function (next) {
+                fn(function (error) {
+                    if (error) {
+                        return self.error(error)
+                    }
                     next();
                 });
             });
@@ -314,6 +323,21 @@
             }
 
             return parallerWrapper.paralFunc(fn);
+        };
+
+        this.$$paralFunc = function(fn) {
+            if (fn.length != 1) {
+                return this.paralFunc(fn)
+            }
+
+            return this.paralFunc(function (next) {
+                fn(function (error) {
+                    if (error) {
+                        return self.error(error)
+                    }
+                    next();
+                });
+            });
         };
 
         this.exec = function () {
@@ -723,5 +747,5 @@
     } else {
         globalScope.avQ = Queue;
     }
-}).
-    call(this);
+
+}).call(this);
