@@ -1,6 +1,6 @@
 {
   "name": "avril.queue",
-  "version": "0.0.29",
+  "version": "0.0.30",
   "description": "an async flow control queue module",
   "main": "index.js",
   "directories": {

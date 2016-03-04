@@ -164,6 +164,13 @@
                     subQueue._pids.push(self.id);
                     subQueue._pid = self.id;
                     var _next = function () {
+                        if(_next.isCalled) {
+                            console.error('Call next() more than one time. callee:', arguments.callee.toString());
+
+                            return ;
+                        }
+                        _next.isCalled = true;
+
                         if (task.status === 'done' || task.stop) {
                             return false;
                         }
