@@ -449,9 +449,21 @@
                     , $waitList = hasReturn ? self.$awaitData(nameId('anonymous-data')) : null;
                 if (arguments.length == 4) {
                     ctx = arguments[0];
-                    asyncCall = arguments[1];
-                    eachArgs = arguments[2];
+
+                    if(asyncCall instanceof Array || asyncCall instanceof $AwaitData){
+                        asyncCall = arguments[1];
+                        eachArgs = arguments[2];
+                    } else {
+                        asyncCall = arguments[2];
+                        eachArgs = arguments[1];
+                    }
+
                     fn = arguments[3];
+                } else if(arguments.length < 4) {
+                    if(asyncCall instanceof Array || asyncCall instanceof $AwaitData){
+                        asyncCall = arguments[1];
+                        eachArgs = arguments[0];
+                    }
                 }
 
                 this.func(function (next) {
